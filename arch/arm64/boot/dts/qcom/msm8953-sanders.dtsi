@@ -102,7 +102,7 @@
 	/delete-node/ wsa881x-i2c-codec@f;
 };
 
-&tlmm {
+&soc {
 	/delete-node/ wsa_clk;
 	/delete-node/ wsa_reset;
 	/delete-node/ wsa-vi;
