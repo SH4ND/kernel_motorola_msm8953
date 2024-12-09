@@ -38,6 +38,29 @@
 		/delete-property/ spi3;
 	};
 
+	reserved-memory {
+		ramoops_mem: ramoops_mem_region {
+			compatible = "ramoops";
+			reg = <0x0 0xef000000 0x0 0x80000>;
+			console-size = <0x40000>;
+			pmsg-size = <0x800>;
+			record-size = <0x3F800>;
+		};
+		tzlog_bck_mem: tzlog_bck_region {
+			no-map;
+			reg = <0x0 TZLOG_BCK_BASE_8953
+				0x0 TZLOG_BCK_SIZE>;
+			label = "tzlog_bck_mem";
+		};
+
+		wdog_cpuctx_mem: wdog_cpuctx_region {
+			no-map;
+			reg = <0x0 WDOG_CPUCTX_BASE_8953
+				0x0 WDOG_CPUCTX_SIZE_8953>;
+			label = "wdog_cpuctx_mem";
+		};
+	};
+
 	utags {
 		compatible = "mmi,utags";
 		mmi,main-utags = "/dev/block/bootdevice/by-name/utags";
@@ -52,37 +75,37 @@
 
 };
 
-&reserved_memory {
-	ramoops_mem: ramoops_mem_region {
-		compatible = "ramoops";
-		ramoops-annotate-size = <MMI_ANNOTATE_SIZE>;
-		no-map;
-		console-size = <RAMOOPS_CONSOLE_SIZE>;
-		pmsg-size = <RAMOOPS_PMSG_SIZE>;
-		record-size = <RAMOOPS_RECORD_SIZE>;
-		reg = <0x0 RAMOOPS_BASE_ADDR_8953 0x0 RAMOOPS_SIZE>;
-		label = "ramoops_mem";
+&firmware {
+	android {
+		/delete-node/ fstab;
+		/delete-node/ vbmeta;
 	};
+};
 
-	tzlog_bck_mem: tzlog_bck_region {
-		no-map;
-		reg = <0x0 TZLOG_BCK_BASE_8953
-			0x0 TZLOG_BCK_SIZE_8953>;
-		label = "tzlog_bck_mem";
-	};
+&msm_gpu {
+	qcom,disable-wake-on-touch;
+};
 
-	wdog_cpuctx_mem: wdog_cpuctx_region {
-		no-map;
-		reg = <0x0 WDOG_CPUCTX_BASE_8953
-			0x0 WDOG_CPUCTX_SIZE_8953>;
-		label = "wdog_cpuctx_mem";
-	};
+&qcom_seecom {
+	qcom,appsbl-qseecom-support;
+};
 
-	mmi_annotate_mem: mmi_annotate_mem_region {
-			no-map;
-			reg = <0x0 MMI_ANNOTATE_BASE_8953
-					0x0 MMI_ANNOTATE_SIZE>;
-	};
+&flash_led {
+	/delete-property/ qcom,clamp-curr;
+	qcom,clamp-current = <200>;
+};
+
+&i2c_2 {
+	/delete-node/ wsa881x-i2c-codec@44;
+	/delete-node/ wsa881x-i2c-codec@45;
+	/delete-node/ wsa881x-i2c-codec@e;
+	/delete-node/ wsa881x-i2c-codec@f;
+};
+
+&tlmm {
+	/delete-node/ wsa_clk;
+	/delete-node/ wsa_reset;
+	/delete-node/ wsa-vi;
 };
 
 &soc{
@@ -93,10 +116,9 @@
 
 	gpio_keys {
 		compatible = "gpio-keys";
-		input-name = "gpio-keys";
-		pinctrl-names = "tlmm_gpio_key_active","tlmm_gpio_key_suspend";
+		label = "gpio-keys";
+		pinctrl-names = "default";
 		pinctrl-0 = <&gpio_key>;
-		pinctrl-1 = <&gpio_key>;
 
 		vol_up {
 			label = "volume_up";
@@ -105,7 +127,16 @@
 			linux,code = <115>;
 			gpio-key,wakeup;
 			debounce-interval = <15>;
+			linux,can-disable;
 		};
+	};
+
+	restart@4ab000 {
+		qcom,force-warm-reboot;
+	};
+
+	qcom,lpm-levels {
+		qcom,use-psci;
 	};
 
 	/delete-node/ eldo2;
@@ -114,6 +145,9 @@
 	/delete-node/ spi@78b7000;
 	/delete-node/ adv_vreg;
 	/delete-node/ sound-9335;
+        /delete-node/ wsa881x_analog_vi_gpio;
+	/delete-node/ wsa881x_analog_clk_gpio;
+        /delete-node/ wsa881x_analog_reset_gpio;
 
 	dummy_vreg: dummy_vreg {
 		compatible = "regulator-fixed";
@@ -405,57 +439,11 @@
 		qcom,config-info = "sanders";
 	};
 
-	qcom,sensor-information {
-		/delete-node/ sensor_information18;
-
-		sensor_information21: qcom,sensor-information-21 {
-			qcom,sensor-type = "adc";
-			qcom,sensor-name = "msm_therm";
-		};
-
-		sensor_information22: qcom,sensor-information-22 {
-			qcom,sensor-type = "adc";
-			qcom,sensor-name = "battery";
-			qcom,alias-name  = "batt_therm";
-			qcom,scaling-factor = <1000>;
-		};
-		sensor_information23: qcom,sensor-information-23 {
-			qcom,sensor-type = "adc";
-			qcom,sensor-name = "front_temp";
-			qcom,scaling-factor = <1000>;
-		};
-		sensor_information24: qcom,sensor-information-24 {
-			qcom,sensor-type = "adc";
-			qcom,sensor-name = "back_temp";
-			qcom,scaling-factor = <1000>;
-		};
-	};
-
 	sys_temp_support {
 		compatible = "mmi,sys-temp";
 		mmi,temperature-names = "front_temp",
 					"back_temp";
 		status = "ok";
-	};
-
-	ramoops {
-		compatible = "ramoops";
-		status = "ok";
-
-		android,ramoops-buffer-start = <RAMOOPS_BASE_ADDR_8953>;
-		android,ramoops-buffer-size = <RAMOOPS_SIZE>;
-		android,ramoops-console-size = <RAMOOPS_CONSOLE_SIZE>;
-		android,ramoops-record-size = <RAMOOPS_RECORD_SIZE>;
-		android,ramoops-annotate-size = <MMI_ANNOTATE_SIZE>;
-		android,ramoops-dump-oops = <0x1>;
-
-		linux,contiguous-region = <&ramoops_mem>;
-	};
-
-	mmi_annotate {
-		compatible = "mmi,annotate";
-		memory-region = <&mmi_annotate_mem>;
-		mem-size = <0x20000>;
 	};
 
 	wdog: qcom,wdt@b017000 {
@@ -592,8 +580,8 @@
 			&cdc_pdm_lines_2_act &pri_tlmm_lines_act
 			&pri_tlmm_ws_act &cs35l35_mclk_on>;
 
-		asoc-codec = <&stub_codec>, <&pm8953_diangu_dig>;
-		asoc-codec-names = "msm-stub-codec.1", "cajon_codec";
+		asoc-codec = <&stub_codec>, <&msm_digital_codec>;
+		asoc-codec-names = "msm-stub-codec.1", "msm-dig-codec";
 	};
 
 	qcom,tz_gpio {
@@ -602,57 +590,6 @@
 			<97>,
 			<98>,
 			<99>;
-	};
-};
-
-&pm8953_1 {
-	/delete-node/ analog-codec@f000;
-
-	pm8953_diangu_dig: analog-codec@f000 {
-		compatible = "qcom,pmic-analog-codec";
-		reg = <0xf000 0x100>;
-		interrupt-parent = <&spmi_bus>;
-		interrupts = <0x1 0xf0 0x0 IRQ_TYPE_NONE>,
-			     <0x1 0xf0 0x1 IRQ_TYPE_NONE>,
-			     <0x1 0xf0 0x2 IRQ_TYPE_NONE>,
-			     <0x1 0xf0 0x3 IRQ_TYPE_NONE>,
-			     <0x1 0xf0 0x4 IRQ_TYPE_NONE>,
-			     <0x1 0xf0 0x5 IRQ_TYPE_NONE>,
-			     <0x1 0xf0 0x6 IRQ_TYPE_NONE>,
-			     <0x1 0xf0 0x7 IRQ_TYPE_NONE>;
-		interrupt-names = "spk_cnp_int",
-				  "spk_clip_int",
-				  "spk_ocp_int",
-				  "ins_rem_det1",
-				  "but_rel_det",
-				  "but_press_det",
-				  "ins_rem_det",
-				  "mbhc_int";
-
-		cdc-vdda-cp-supply = <&pm8953_s4>;
-		qcom,cdc-vdda-cp-voltage = <1900000 2050000>;
-		qcom,cdc-vdda-cp-current = <500000>;
-
-		cdc-vdd-io-supply = <&pm8953_l5>;
-		qcom,cdc-vdd-io-voltage = <1800000 1800000>;
-		qcom,cdc-vdd-io-current = <5000>;
-
-		cdc-vdd-pa-supply = <&pm8953_s4>;
-		qcom,cdc-vdd-pa-voltage = <1900000 2050000>;
-		qcom,cdc-vdd-pa-current = <260000>;
-
-		cdc-vdd-mic-bias-supply = <&pm8953_l13>;
-		qcom,cdc-vdd-mic-bias-voltage = <3125000 3125000>;
-		qcom,cdc-vdd-mic-bias-current = <5000>;
-
-		qcom,cdc-mclk-clk-rate = <9600000>;
-
-		qcom,cdc-static-supplies =  "cdc-vdd-io",
-					   "cdc-vdd-pa",
-					   "cdc-vdda-cp";
-
-		qcom,cdc-on-demand-supplies = "cdc-vdd-mic-bias";
-		qcom,dig-cdc-base-addr = <0xc0f0000>;
 	};
 };
 
@@ -692,7 +629,7 @@
 &pmi_haptic{
 	qcom,vmax-mv = <1950>;
 	qcom,wave-play-rate-us = <4255>;
-	qcom,actuator-type = "lra";
+	qcom,actuator-type = <1>;
 	qcom,wave-shape = "sine";
 	qcom,lra-auto-res-mode="none";
 	qcom,lra-high-z="none";
@@ -844,7 +781,7 @@
 	};
 };
 
-$qpnp_smbcharger {
+&qpnp_smbcharger {
 	status = "okay";
 	/delete-property/ qcom,iterm-ma;
 	qcom,iterm-disabled;
@@ -1147,6 +1084,7 @@ $qpnp_smbcharger {
 	pinctrl-0 = <&usb_id_active>;
 	pinctrl-1 = <&usb_id_sleep>;
 	vbus_dwc3-supply = <&smbcharger_charger_otg>;
+	extcon = <&qpnp_smbcharger>;
 };
 
 &pm8953_l6 {
