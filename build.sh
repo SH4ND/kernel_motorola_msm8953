@@ -42,8 +42,6 @@ if [[ $1 = "-c" || $1 = "--clean" ]]; then
 	rm -rf out
 fi
 
-rm -rf KernelSU && curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-
 mkdir -p out
 make O=out ARCH=arm64 $DEFCONFIG
 
